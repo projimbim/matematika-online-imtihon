@@ -37,7 +37,7 @@ const $=id=>document.getElementById(id),storageKey="math_exam_v1";
 function saveLocal(){localStorage.setItem(storageKey,JSON.stringify({answers,page,endAt,studentName,groupName}))}
 function countDone(){return Object.keys(answers).length}
 function updateProgress(){$("answered").textContent=countDone()+" / 50";$("progress").style.width=(countDone()/50*100)+"%"}
-function render(){const [first,last]=GROUPS[page];$("pageTitle").textContent=first+"–"+last+"-savollar";$("pageImage").src="pages/page-"+String(page+1).padStart(2,"0")+".png";$("answers").innerHTML="";
+function render(){const [first,last]=GROUPS[page];$("pageTitle").textContent=first+"–"+last+"-savollar";$("pageImage").src="page-"+String(page+1).padStart(2,"0")+".png";$("answers").innerHTML="";
 for(let q=first;q<=last;q++){const wrap=document.createElement("div");wrap.className="qitem";const title=document.createElement("b");title.textContent=q+". savol";wrap.appendChild(title);const row=document.createElement("div");row.className="answerrow";
 ["A","B","C","D"].forEach(letter=>{const lab=document.createElement("label"),radio=document.createElement("input");radio.type="radio";radio.name="q"+q;radio.value=letter;radio.checked=answers[q]===letter;radio.addEventListener("change",()=>{answers[q]=letter;saveLocal();refreshNav()});lab.append(radio,document.createTextNode(letter));row.appendChild(lab)});wrap.appendChild(row);$("answers").appendChild(wrap)}
 $("prev").disabled=page===0;$("next").disabled=page===9;refreshNav();updateProgress();saveLocal()}
