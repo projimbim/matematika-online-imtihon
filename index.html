@@ -1,0 +1,54 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Matematika — Online imtihon</title>
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--ink:#172033;--muted:#64748b;--blue:#2457d6;--line:#e3e8f1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,Arial,sans-serif}
+header{background:#14264b;color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header strong{font-size:19px}.timer{font-size:22px;font-weight:800;background:#ffffff1c;padding:8px 14px;border-radius:12px;font-variant-numeric:tabular-nums}
+main{max-width:1120px;margin:24px auto;padding:0 16px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:0 5px 18px #1c31500a}
+h1,h2{margin:0 0 8px}.muted{color:var(--muted)}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+input{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}
+button{border:0;border-radius:10px;padding:12px 17px;background:var(--blue);color:#fff;font-weight:700;font:inherit;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#e8eefc;color:#1e40af}.danger{background:#b42318}
+.hidden{display:none!important}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.progress{height:8px;background:#e8edf5;border-radius:99px;overflow:hidden;margin:14px 0}.progress span{display:block;height:100%;background:var(--blue);width:0}
+.layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.8fr);gap:18px;align-items:start}
+.pageimg{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block;background:#fff}
+.qgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:12px}.qbtn{background:#eef2f7;color:#26334b;padding:8px 0}.qbtn.done{background:#d8f4e5;color:#12633c}.qbtn.current{outline:2px solid var(--blue)}
+.answerrow{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:8px 0 14px}
+.answerrow label{border:1px solid var(--line);border-radius:9px;padding:10px;text-align:center;cursor:pointer}
+.answerrow input{width:auto;margin-right:5px}.answerrow label:has(input:checked){border-color:var(--blue);background:#edf2ff}
+.qitem{border-bottom:1px solid var(--line);padding:10px 0}.qitem:last-child{border:0}.actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
+.note{background:#fff8e6;border:1px solid #f2dfaa;padding:12px;border-radius:10px;color:#76540b;font-size:14px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.fields{grid-template-columns:1fr}main{margin:14px auto}.card{padding:15px}}
+</style></head><body>
+<header><strong>📘 MATEMATIKA — ONLINE IMTIHON</strong><div class="timer" id="timer">90:00</div></header>
+<main><section class="card" id="welcome"><h1>1-oylik imtihon</h1><p class="muted">50 ta savol · 90 daqiqa · Har bir savolda bitta to‘g‘ri javob</p>
+<div class="fields"><input id="student" placeholder="O‘quvchining ism-familiyasi"><input id="group" placeholder="Sinf / guruh (masalan, 5-B)"></div>
+<p class="note" style="margin-top:14px">Ism-familiyani to‘g‘ri kiriting. Sahifani yopmang. Javoblar brauzerda vaqtincha saqlanadi; natijani yuborish uchun internet kerak.</p><button id="start" style="margin-top:12px">Imtihonni boshlash</button></section>
+<section id="exam" class="hidden"><div class="card"><div class="topline"><div><h2 id="pageTitle">1–5-savollar</h2><div class="muted" id="studentLabel"></div></div><div><b id="answered">0 / 50</b><div class="muted">javob belgilangan</div></div></div><div class="progress"><span id="progress"></span></div>
+<div class="layout"><div><img id="pageImage" class="pageimg" alt="Asl test sahifasi"></div><div class="card" style="margin:0;padding:14px"><h2>Javoblaringiz</h2><p class="muted">Rasmdagi savollarga mos javobni belgilang.</p><div id="answers"></div>
+<div class="actions"><button class="secondary" id="prev">← Oldingi</button><button id="next">Keyingi →</button></div><div class="qgrid" id="nav"></div><p class="muted" style="font-size:12px">Yashil raqam — javob belgilangan.</p><button class="danger" id="finish" style="width:100%;margin-top:14px">Testni yakunlash</button></div></div></div></section>
+<section class="card hidden" id="result"><h1>Imtihon yakunlandi</h1><p id="resultText"></p><p class="muted" id="sendStatus"></p></section></main>
+<script>
+const TOTAL=50,DURATION=90*60;
+const GROUPS=[[1,7],[8,14],[15,18],[19,24],[25,28],[29,33],[34,38],[39,43],[44,49],[50,50]];
+let answers={},page=0,endAt=0,timerHandle=null,studentName="",groupName="";
+const $=id=>document.getElementById(id),storageKey="math_exam_v1";
+function saveLocal(){localStorage.setItem(storageKey,JSON.stringify({answers,page,endAt,studentName,groupName}))}
+function countDone(){return Object.keys(answers).length}
+function updateProgress(){$("answered").textContent=countDone()+" / 50";$("progress").style.width=(countDone()/50*100)+"%"}
+function render(){const [first,last]=GROUPS[page];$("pageTitle").textContent=first+"–"+last+"-savollar";$("pageImage").src="pages/page-"+String(page+1).padStart(2,"0")+".png";$("answers").innerHTML="";
+for(let q=first;q<=last;q++){const wrap=document.createElement("div");wrap.className="qitem";const title=document.createElement("b");title.textContent=q+". savol";wrap.appendChild(title);const row=document.createElement("div");row.className="answerrow";
+["A","B","C","D"].forEach(letter=>{const lab=document.createElement("label"),radio=document.createElement("input");radio.type="radio";radio.name="q"+q;radio.value=letter;radio.checked=answers[q]===letter;radio.addEventListener("change",()=>{answers[q]=letter;saveLocal();refreshNav()});lab.append(radio,document.createTextNode(letter));row.appendChild(lab)});wrap.appendChild(row);$("answers").appendChild(wrap)}
+$("prev").disabled=page===0;$("next").disabled=page===9;refreshNav();updateProgress();saveLocal()}
+function refreshNav(){$("nav").innerHTML="";for(let q=1;q<=50;q++){const b=document.createElement("button");b.textContent=q;b.className="qbtn"+(answers[q]?" done":"")+(q>=GROUPS[page][0]&&q<=GROUPS[page][1]?" current":"");b.onclick=()=>{page=GROUPS.findIndex(g=>q>=g[0]&&q<=g[1]);render()};$("nav").appendChild(b)}}
+function tick(){let left=Math.max(0,Math.ceil((endAt-Date.now())/1000));$("timer").textContent=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0");if(left<=0){clearInterval(timerHandle);finish(true)}}
+function begin(){studentName=$("student").value.trim();groupName=$("group").value.trim();if(!studentName||!groupName){alert("Ism-familiya va sinf/guruhni kiriting.");return}answers={};page=0;endAt=Date.now()+DURATION*1000;$("welcome").classList.add("hidden");$("exam").classList.remove("hidden");$("studentLabel").textContent=studentName+" · "+groupName;render();tick();timerHandle=setInterval(tick,1000)}
+async function finish(auto=false){if(!$("result").classList.contains("hidden"))return;if(!auto&&!confirm("Testni yakunlaysizmi?"))return;clearInterval(timerHandle);$("exam").classList.add("hidden");$("result").classList.remove("hidden");$("resultText").textContent="Javoblaringiz yuborilmoqda...";
+const payload={student:studentName,group:groupName,answers:answers,durationSeconds:Math.min(DURATION,Math.max(0,Math.round((DURATION*1000-(endAt-Date.now()))/1000))),autoSubmitted:auto};
+try{await fetch("https://script.google.com/macros/s/AKfycbzMr7fgWQVsdRh2yZKhXv7KO1qh50tXVaO3357amW0hUFt-gdyffQ2lEZuZAhauv_tR/exec",{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});$("resultText").textContent="Javoblaringiz yuborildi. Natijani o‘qituvchingiz Google Sheets jadvalidan tekshiradi.";$("sendStatus").textContent="Internet va Google Sheets ulanishi to‘g‘ri sozlangan bo‘lishi kerak.";localStorage.removeItem(storageKey)}
+catch(err){$("resultText").textContent="Natijani yuborishda xatolik yuz berdi.";$("sendStatus").textContent="Internetni tekshiring va o‘qituvchiga murojaat qiling."}}
+$("start").onclick=begin;$("prev").onclick=()=>{page--;render()};$("next").onclick=()=>{page++;render()};$("finish").onclick=()=>finish(false);
+const saved=(()=>{try{return JSON.parse(localStorage.getItem(storageKey)||"null")}catch(e){return null}})();
+if(saved&&saved.endAt>Date.now()){$("student").value=saved.studentName||"";$("group").value=saved.groupName||"";const resume=document.createElement("button");resume.textContent="Oldingi testni davom ettirish";resume.className="secondary";resume.style.marginLeft="10px";resume.onclick=()=>{answers=saved.answers||{};page=saved.page||0;endAt=saved.endAt;studentName=saved.studentName;groupName=saved.groupName;$("welcome").classList.add("hidden");$("exam").classList.remove("hidden");$("studentLabel").textContent=studentName+" · "+groupName;render();tick();timerHandle=setInterval(tick,1000)};$("start").after(resume)}
+</script></body></html>
